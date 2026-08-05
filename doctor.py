@@ -2,16 +2,21 @@
 DevDoctor Entry Point
 """
 
+
 from scanner.file_scanner import FileScanner
+from scanner.html_scanner import HTMLScanner
 
 
 def main():
 
     project_path = input("Enter project path: ").strip()
 
-    scanner = FileScanner(project_path)
+    #
+    # Scan Files
+    #
+    file_scanner = FileScanner(project_path)
 
-    project = scanner.scan()
+    project = file_scanner.scan()
 
     print("\nProject Scan Complete\n")
 
@@ -20,9 +25,15 @@ def main():
     print(f"CSS Files  : {len(project.css)}")
     print(f"JS Files   : {len(project.js)}")
 
-    print("-" * 30)
-    print(f"Total Files: {project.total}")
+    #
+    # Scan HTML
+    #
+    html_scanner = HTMLScanner()
 
+    html_result = html_scanner.scan(
+        project.php + project.html
+    )
 
+    print("\nHTML Scan Complete\n")
 if __name__ == "__main__":
     main()

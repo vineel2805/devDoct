@@ -22,7 +22,7 @@ class FileScanner:
             ProjectFiles
         """
 
-        project = ProjectFiles()
+        project = ProjectFiles(root=self.root)
 
         for path in self.root.rglob("*"):
 

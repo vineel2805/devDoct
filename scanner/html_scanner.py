@@ -1,5 +1,5 @@
 """
-Scans HTML/PHP files for class and id attributes.
+Scans HTML/PHP files for class, id, and element attributes.
 """
 
 from pathlib import Path
@@ -11,7 +11,7 @@ from parsers.php_cleaner import PHPCleaner
 
 
 class HTMLScanner:
-    """Extracts HTML classes and IDs."""
+    """Extracts HTML classes, IDs, and elements."""
 
     def scan(self, files: list[Path]) -> HTMLScanResult:
 
@@ -32,16 +32,21 @@ class HTMLScanner:
 
                 file_result = FileHTMLResult()
 
-                #
-                # Scan HTML elements
-                #
                 for tag in soup.find_all(True):
 
                     file_result.total_elements += 1
 
-                    #
+                    # Extract HTML element
+                    element = tag.name
+
+                    if element:
+                        element = element.strip().lower()
+
+                        if element:
+                            file_result.elements.add(element)
+                            result.elements.add(element)
+
                     # Extract classes
-                    #
                     classes = tag.get("class")
 
                     if classes:
@@ -50,13 +55,10 @@ class HTMLScanner:
                             cls = cls.strip()
 
                             if cls:
-
                                 file_result.classes.add(cls)
                                 result.classes.add(cls)
 
-                    #
                     # Extract IDs
-                    #
                     tag_id = tag.get("id")
 
                     if tag_id:
@@ -64,13 +66,10 @@ class HTMLScanner:
                         tag_id = tag_id.strip()
 
                         if tag_id:
-
                             file_result.ids.add(tag_id)
                             result.ids.add(tag_id)
 
-                #
                 # Store per-file result
-                #
                 result.files[file] = file_result
 
             except Exception as e:

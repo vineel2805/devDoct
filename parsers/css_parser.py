@@ -1,27 +1,47 @@
 """
 CSS Parser.
 
-Parses CSS using tinycss2 and extracts selectors.
+Parses CSS syntax with tinycss2 and validates selectors
+with cssselect2.
 """
 
 from dataclasses import dataclass, field
 
+import cssselect2
 import tinycss2
 
 
 @dataclass
+class ParsedSelector:
+    """Stores information about one CSS selector."""
+
+    selector: str
+    compiled: object | None = None
+
+    source_line: int = 0
+    source_column: int = 0
+
+    valid: bool = True
+    error: str | None = None
+
+
+@dataclass
 class ParsedCSS:
-    """Selectors extracted from a CSS file."""
+    """Stores parsed CSS information."""
 
     classes: set[str] = field(default_factory=set)
     ids: set[str] = field(default_factory=set)
     elements: set[str] = field(default_factory=set)
 
+    selectors: list[ParsedSelector] = field(default_factory=list)
+
     total_rules: int = 0
+    total_selectors: int = 0
+    invalid_selectors: int = 0
 
 
 class CSSParser:
-    """Parses CSS source code."""
+    """Parses CSS stylesheets."""
 
     def parse(self, css: str) -> ParsedCSS:
 
@@ -33,121 +53,221 @@ class CSSParser:
             skip_whitespace=True
         )
 
-        for rule in stylesheet:
-
-            if rule.type != "qualified-rule":
-                continue
-
-            result.total_rules += 1
-
-            selector = tinycss2.serialize(rule.prelude)
-
-            self._extract_selectors(
-                selector,
-                result
-            )
+        self._parse_rules(
+            stylesheet,
+            result
+        )
 
         return result
 
-    def _extract_selectors(
+    def _parse_rules(
+        self,
+        rules,
+        result: ParsedCSS
+    ) -> None:
+
+        for rule in rules:
+
+            #
+            # Normal CSS rule
+            #
+            if rule.type == "qualified-rule":
+
+                result.total_rules += 1
+
+                self._parse_selector_rule(
+                    rule,
+                    result
+                )
+
+            #
+            # At-rules such as @media
+            #
+            elif rule.type == "at-rule":
+
+                if rule.content is not None:
+
+                    nested_rules = tinycss2.parse_blocks_contents(
+                        rule.content,
+                        skip_comments=True,
+                        skip_whitespace=True
+                    )
+
+                    self._parse_rules(
+                        nested_rules,
+                        result
+                    )
+
+    def _parse_selector_rule(
+        self,
+        rule,
+        result: ParsedCSS
+    ) -> None:
+
+        selector_text = tinycss2.serialize(
+            rule.prelude
+        ).strip()
+
+        if not selector_text:
+            return
+
+        try:
+
+            compiled_selectors = (
+                cssselect2.compile_selector_list(
+                    rule.prelude
+                )
+            )
+
+        except cssselect2.SelectorError as e:
+
+            result.invalid_selectors += 1
+
+            result.selectors.append(
+                ParsedSelector(
+                    selector=selector_text,
+                    source_line=rule.source_line,
+                    source_column=rule.source_column,
+                    valid=False,
+                    error=str(e)
+                )
+            )
+
+            return
+
+        #
+        # cssselect2 returns one compiled selector
+        # for every selector in a selector list.
+        #
+        for compiled in compiled_selectors:
+
+            selector = ParsedSelector(
+                selector=selector_text,
+                compiled=compiled,
+                source_line=rule.source_line,
+                source_column=rule.source_column
+            )
+
+            result.selectors.append(selector)
+
+            result.total_selectors += 1
+
+            #
+            # Maintain class / ID / element summaries.
+            #
+            self._extract_selector_tokens(
+                selector_text,
+                result
+            )
+
+    def _extract_selector_tokens(
         self,
         selector: str,
         result: ParsedCSS
     ) -> None:
+        """
+        Extract class, ID, and element names from a CSS selector.
 
-        token = ""
+        cssselect2 validates the selector.
+        This method maintains the selector summary used
+        by DevDoctor.
+        """
 
-        i = 0
+        tokens = tinycss2.parse_component_value_list(
+            selector,
+            skip_comments=True
+        )
 
-        while i < len(selector):
+        self._extract_tokens(
+            tokens,
+            result
+        )
 
-            c = selector[i]
+    def _extract_tokens(
+        self,
+        tokens,
+        result: ParsedCSS
+    ) -> None:
+        """
+        Recursively extract selector tokens.
+
+        Handles selectors inside functions such as:
+
+            :not(.card)
+            :is(.card, .button)
+            :where(.container, .wrapper)
+            :has(.card)
+        """
+
+        previous_literal = None
+
+        for token in tokens:
 
             #
-            # Class
+            # Class selector
             #
-            if c == ".":
+            if (
+                previous_literal == "."
+                and token.type == "ident"
+            ):
+                result.classes.add(token.value)
 
-                i += 1
-
-                token = ""
-
-                while (
-                    i < len(selector)
-                    and (
-                        selector[i].isalnum()
-                        or selector[i] in "-_"
-                    )
-                ):
-
-                    token += selector[i]
-                    i += 1
-
-                if token:
-                    result.classes.add(token)
-
+                previous_literal = None
                 continue
 
             #
-            # ID
+            # ID selector
             #
-            if c == "#":
+            if token.type == "hash":
 
-                i += 1
+                if token.value:
+                    result.ids.add(token.value)
 
-                token = ""
-
-                while (
-                    i < len(selector)
-                    and (
-                        selector[i].isalnum()
-                        or selector[i] in "-_"
-                    )
-                ):
-
-                    token += selector[i]
-                    i += 1
-
-                if token:
-                    result.ids.add(token)
-
+                previous_literal = None
                 continue
 
             #
-            # Element
+            # Function selector
             #
-            if c.isalpha():
+            # :not(...)
+            # :is(...)
+            # :where(...)
+            # :has(...)
+            #
+            if token.type == "function":
 
-                token = c
+                self._extract_tokens(
+                    token.arguments,
+                    result
+                )
 
-                i += 1
-
-                while (
-                    i < len(selector)
-                    and (
-                        selector[i].isalnum()
-                        or selector[i] == "-"
-                    )
-                ):
-
-                    token += selector[i]
-                    i += 1
-
-                if token.lower() not in {
-                    "hover",
-                    "focus",
-                    "active",
-                    "before",
-                    "after",
-                    "root",
-                    "not",
-                    "is",
-                    "where",
-                    "has"
-                }:
-
-                    result.elements.add(token)
-
+                previous_literal = None
                 continue
 
-            i += 1
+            #
+            # Element selector
+            #
+            if token.type == "ident":
+
+                value = token.value.strip()
+
+                if value:
+                    result.elements.add(
+                        value.lower()
+                    )
+
+                previous_literal = None
+                continue
+
+            #
+            # Track literal tokens such as "."
+            #
+            if token.type == "literal":
+
+                previous_literal = token.value
+                continue
+
+            #
+            # Other token types
+            #
+            previous_literal = None

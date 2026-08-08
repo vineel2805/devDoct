@@ -16,18 +16,23 @@ class FileHTMLResult:
 
     total_elements: int = 0
 
+    # Cleaned HTML source used by CSSMatcher.
+    document: str = ""
+
 
 @dataclass
 class HTMLScanResult:
-    """Stores project-wide HTML scan results."""
+    """Project-wide HTML scan results."""
 
-    # Project-wide unique selectors
+    root: Path
+
     classes: set[str] = field(default_factory=set)
     ids: set[str] = field(default_factory=set)
     elements: set[str] = field(default_factory=set)
 
-    # Per-file scan results
-    files: dict[Path, FileHTMLResult] = field(default_factory=dict)
+    files: dict[Path, FileHTMLResult] = field(
+        default_factory=dict
+    )
 
     @property
     def total_classes(self) -> int:
@@ -39,7 +44,10 @@ class HTMLScanResult:
 
     @property
     def total_elements(self) -> int:
-        return len(self.elements)
+        return sum(
+            file_result.total_elements
+            for file_result in self.files.values()
+        )
 
     @property
     def total_files(self) -> int:

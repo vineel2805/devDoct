@@ -32,7 +32,8 @@ def main():
     html_scanner = HTMLScanner()
 
     html_result = html_scanner.scan(
-        project.php + project.html
+        project.php + project.html,
+        project.root
     )
 
     print("\nHTML Scan Complete\n")

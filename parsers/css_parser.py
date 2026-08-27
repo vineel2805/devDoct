@@ -6,6 +6,7 @@ with cssselect2.
 """
 
 from dataclasses import dataclass, field
+from models.css_declaration import CSSDeclaration
 
 import cssselect2
 import tinycss2
@@ -35,6 +36,8 @@ class ParsedCSS:
 
     selectors: list[ParsedSelector] = field(default_factory=list)
 
+    declarations: list[CSSDeclaration] = field(default_factory=list)
+    
     total_rules: int = 0
     total_selectors: int = 0
     invalid_selectors: int = 0
@@ -134,6 +137,10 @@ class CSSParser:
             )
 
             return
+        self._extract_declarations(
+        rule.content,
+        result
+        )
         #
         # Split the selector list into individual selectors.
         #
@@ -350,3 +357,38 @@ class CSSParser:
             selectors.append(selector)
 
         return selectors
+    def _extract_declarations(
+        self,
+        content,
+        result: ParsedCSS
+    ) -> None:
+        """Extract CSS declarations from a rule."""
+
+        declarations = tinycss2.parse_declaration_list(
+            content,
+            skip_comments=True,
+            skip_whitespace=True
+        )
+
+        for declaration in declarations:
+
+            if declaration.type != "declaration":
+                continue
+
+            property_name = declaration.lower_name
+
+            value = tinycss2.serialize(
+                declaration.value
+            ).strip()
+            
+            if declaration.important:
+                value += " !important"
+
+            result.declarations.append(
+                CSSDeclaration(
+                    property=property_name,
+                    value=value,
+                    source_line=declaration.source_line,
+                    source_column=declaration.source_column
+                )
+            )

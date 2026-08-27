@@ -101,5 +101,38 @@ def main():
 
     for tag_id in sorted(usage_result.missing_ids):
         print(f"  #{tag_id}")
+
+    print()
+    print("Selector Analysis")
+    print("------------------------------")
+
+    print(
+        f"Total Selectors : {usage_result.total_selectors}"
+    )
+
+    print(
+        f"Used Selectors  : {usage_result.used_selectors}"
+    )
+
+    print(
+        f"Unused Selectors: {usage_result.unused_selectors}"
+    )
+    print()
+    print("Unused Selectors")
+    print("------------------------------")
+
+    for selector in usage_result.selectors:
+
+        if not selector.used:
+
+            print(
+                f"  {selector.selector}"
+            )
+
+            print(
+                f"    CSS: "
+                f"{selector.source_file}:"
+                f"{selector.source_line}"
+            )
 if __name__ == "__main__":
     main()

@@ -475,3 +475,74 @@ def test_invalid_selector():
 
     assert "card" in result.classes
     assert result.invalid_selectors >= 1
+def test_selector_list_stores_individual_selector_names():
+
+    css = """
+    .card,
+    .feature-box,
+    .highlight {
+        padding: 10px;
+    }
+    """
+
+    result = CSSParser().parse(css)
+
+    selectors = [
+        selector.selector
+        for selector in result.selectors
+    ]
+
+    assert ".card" in selectors
+    assert ".feature-box" in selectors
+    assert ".highlight" in selectors
+
+    assert len(selectors) == 3
+
+def test_selector_list_does_not_duplicate_full_selector_text():
+
+    css = """
+    .card,
+    .feature-box,
+    .highlight {
+        padding: 10px;
+    }
+    """
+
+    result = CSSParser().parse(css)
+
+    selectors = [
+        selector.selector
+        for selector in result.selectors
+    ]
+
+    assert ".card,\n.feature-box,\n.highlight" not in selectors
+
+
+
+
+def test_selector_list_preserves_same_source_location():
+
+    css = """
+    .card,
+    .feature-box,
+    .highlight {
+        padding: 10px;
+    }
+    """
+
+    result = CSSParser().parse(css)
+
+    assert len(result.selectors) == 3
+
+    lines = {
+        selector.source_line
+        for selector in result.selectors
+    }
+
+    columns = {
+        selector.source_column
+        for selector in result.selectors
+    }
+
+    assert len(lines) == 1
+    assert len(columns) == 1

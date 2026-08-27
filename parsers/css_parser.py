@@ -134,15 +134,22 @@ class CSSParser:
             )
 
             return
-
+        #
+        # Split the selector list into individual selectors.
+        #
+        selector_names = self._split_selector_list(
+            selector_text
+        )
         #
         # cssselect2 returns one compiled selector
         # for every selector in a selector list.
         #
-        for compiled in compiled_selectors:
+        for compiled, selector_name in zip(
+        compiled_selectors,
+        selector_names):
 
             selector = ParsedSelector(
-                selector=selector_text,
+                selector=selector_name,
                 compiled=compiled,
                 source_line=rule.source_line,
                 source_column=rule.source_column
@@ -271,3 +278,75 @@ class CSSParser:
             # Other token types
             #
             previous_literal = None
+
+    def _split_selector_list(
+        self,
+        selector_text: str
+    ) -> list[str]:
+        """
+        Split a CSS selector list into individual selectors.
+
+        Commas inside parentheses or brackets are not
+        treated as selector separators.
+
+        Example:
+
+            .card, .button, .title
+
+        becomes:
+
+            [".card", ".button", ".title"]
+
+        while:
+
+            .card:not(.hidden, .disabled), .button
+
+        becomes:
+
+            [".card:not(.hidden, .disabled)", ".button"]
+        """
+
+        selectors = []
+
+        current = []
+
+        parentheses_depth = 0
+        bracket_depth = 0
+
+        for char in selector_text:
+
+            if char == "(":
+                parentheses_depth += 1
+
+            elif char == ")":
+                if parentheses_depth > 0:
+                    parentheses_depth -= 1
+
+            elif char == "[":
+                bracket_depth += 1
+
+            elif char == "]":
+                if bracket_depth > 0:
+                    bracket_depth -= 1
+
+            if (
+                char == ","
+                and parentheses_depth == 0
+                and bracket_depth == 0
+            ):
+                selector = "".join(current).strip()
+
+                if selector:
+                    selectors.append(selector)
+
+                current = []
+
+            else:
+                current.append(char)
+
+        selector = "".join(current).strip()
+
+        if selector:
+            selectors.append(selector)
+
+        return selectors

@@ -5,6 +5,8 @@ Stores CSS scanning results.
 from pathlib import Path
 from dataclasses import dataclass, field
 
+from parsers.css_parser import ParsedSelector
+
 
 @dataclass
 class FileCSSResult:
@@ -14,6 +16,11 @@ class FileCSSResult:
     ids: set[str] = field(default_factory=set)
     elements: set[str] = field(default_factory=set)
 
+    # Parsed CSS selectors from this file.
+    selectors: list[ParsedSelector] = field(
+        default_factory=list
+    )
+
     total_rules: int = 0
 
 
@@ -21,13 +28,15 @@ class FileCSSResult:
 class CSSScanResult:
     """Stores project-wide CSS scan results."""
 
-    # Project-wide unique selectors
+    # Project-wide unique selectors.
     classes: set[str] = field(default_factory=set)
     ids: set[str] = field(default_factory=set)
     elements: set[str] = field(default_factory=set)
 
-    # Per-file scan results
-    files: dict[Path, FileCSSResult] = field(default_factory=dict)
+    # Per-file scan results.
+    files: dict[Path, FileCSSResult] = field(
+        default_factory=dict
+    )
 
     @property
     def total_classes(self) -> int:
@@ -44,3 +53,12 @@ class CSSScanResult:
     @property
     def total_files(self) -> int:
         return len(self.files)
+
+    @property
+    def total_selectors(self) -> int:
+        """Return total parsed CSS selectors."""
+
+        return sum(
+            len(file_result.selectors)
+            for file_result in self.files.values()
+        )

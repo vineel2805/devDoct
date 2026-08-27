@@ -4,12 +4,6 @@ Stores CSS usage analysis results.
 
 from dataclasses import dataclass, field
 
-"""
-Stores CSS usage analysis results.
-"""
-
-from dataclasses import dataclass, field
-
 
 @dataclass
 class SelectorUsage:
@@ -17,14 +11,14 @@ class SelectorUsage:
 
     selector: str
 
-    used: bool
+    used: bool = False
 
     matched_files: list[str] = field(
         default_factory=list
     )
+    source_file: str = ""
 
     source_line: int = 0
-
     source_column: int = 0
 
     error: str | None = None
@@ -97,16 +91,3 @@ class UsageResult:
             not selector.used
             for selector in self.selectors
         )
-@dataclass
-class UsageResult:
-    """Stores CSS usage analysis results."""
-
-    # CSS classes
-    used_classes: set[str] = field(default_factory=set)
-    unused_classes: set[str] = field(default_factory=set)
-    missing_classes: set[str] = field(default_factory=set)
-
-    # CSS IDs
-    used_ids: set[str] = field(default_factory=set)
-    unused_ids: set[str] = field(default_factory=set)
-    missing_ids: set[str] = field(default_factory=set)

@@ -14,7 +14,10 @@ class CSSScanner:
     def __init__(self):
         self.parser = CSSParser()
 
-    def scan(self, files: list[Path]) -> CSSScanResult:
+    def scan(
+        self,
+        files: list[Path]
+    ) -> CSSScanResult:
 
         result = CSSScanResult()
 
@@ -31,28 +34,44 @@ class CSSScanner:
 
                 file_result = FileCSSResult()
 
-                #
+                # -----------------------------
                 # Store file data
-                #
+                # -----------------------------
+
                 file_result.classes = parsed.classes
                 file_result.ids = parsed.ids
                 file_result.elements = parsed.elements
+
+                file_result.selectors = parsed.selectors
+
                 file_result.total_rules = parsed.total_rules
 
-                #
+                # -----------------------------
                 # Store project-wide data
-                #
-                result.classes.update(parsed.classes)
-                result.ids.update(parsed.ids)
-                result.elements.update(parsed.elements)
+                # -----------------------------
 
-                #
+                result.classes.update(
+                    parsed.classes
+                )
+
+                result.ids.update(
+                    parsed.ids
+                )
+
+                result.elements.update(
+                    parsed.elements
+                )
+
+                # -----------------------------
                 # Store file result
-                #
+                # -----------------------------
+
                 result.files[file] = file_result
 
             except Exception as e:
 
-                print(f"Failed to scan {file}: {e}")
+                print(
+                    f"Failed to scan {file}: {e}"
+                )
 
         return result

@@ -7,6 +7,7 @@ with cssselect2.
 
 from dataclasses import dataclass, field
 from models.css_declaration import CSSDeclaration
+from models.css_rule import CSSRule
 
 import cssselect2
 import tinycss2
@@ -37,6 +38,8 @@ class ParsedCSS:
     selectors: list[ParsedSelector] = field(default_factory=list)
 
     declarations: list[CSSDeclaration] = field(default_factory=list)
+
+    rules: list[CSSRule] = field(default_factory=list)
     
     total_rules: int = 0
     total_selectors: int = 0
@@ -137,15 +140,25 @@ class CSSParser:
             )
 
             return
-        self._extract_declarations(
-        rule.content,
-        result
-        )
+        declarations = self._extract_declarations(
+        rule.content)
         #
         # Split the selector list into individual selectors.
         #
         selector_names = self._split_selector_list(
             selector_text
+        )
+        css_rule = CSSRule(
+        selectors=selector_names,
+        declarations=declarations,
+        source_line=rule.source_line,
+        source_column=rule.source_column
+        )
+
+        result.rules.append(css_rule)
+
+        result.declarations.extend(
+            declarations
         )
         #
         # cssselect2 returns one compiled selector
@@ -358,10 +371,9 @@ class CSSParser:
 
         return selectors
     def _extract_declarations(
-        self,
-        content,
-        result: ParsedCSS
-    ) -> None:
+    self,
+    content
+    ) -> list[CSSDeclaration]:
         """Extract CSS declarations from a rule."""
 
         declarations = tinycss2.parse_declaration_list(
@@ -369,7 +381,7 @@ class CSSParser:
             skip_comments=True,
             skip_whitespace=True
         )
-
+        parsed_declarations = []
         for declaration in declarations:
 
             if declaration.type != "declaration":
@@ -384,7 +396,7 @@ class CSSParser:
             if declaration.important:
                 value += " !important"
 
-            result.declarations.append(
+            parsed_declarations.append(
                 CSSDeclaration(
                     property=property_name,
                     value=value,
@@ -392,3 +404,4 @@ class CSSParser:
                     source_column=declaration.source_column
                 )
             )
+        return parsed_declarations

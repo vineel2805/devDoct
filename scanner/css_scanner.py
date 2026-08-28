@@ -43,7 +43,7 @@ class CSSScanner:
                 file_result.elements = parsed.elements
 
                 file_result.selectors = parsed.selectors
-
+                file_result.declarations = parsed.declarations
                 file_result.total_rules = parsed.total_rules
 
                 # -----------------------------

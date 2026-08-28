@@ -6,6 +6,7 @@ from pathlib import Path
 from dataclasses import dataclass, field
 
 from parsers.css_parser import ParsedSelector
+from models.css_declaration import CSSDeclaration
 
 
 @dataclass
@@ -20,8 +21,11 @@ class FileCSSResult:
     selectors: list[ParsedSelector] = field(
         default_factory=list
     )
-
+    declarations: list[CSSDeclaration] = field(
+    default_factory=list
+    )
     total_rules: int = 0
+
 
 
 @dataclass

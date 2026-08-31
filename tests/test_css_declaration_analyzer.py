@@ -155,7 +155,7 @@ def test_analyzer_finds_duplicate_property():
     assert finding.selector == ".card"
     assert finding.property == "color"
     assert finding.source_line == 4
-    assert finding.issue == "duplicate_property"
+    assert finding.issue == "conflicting_declaration"
 def test_analyzer_does_not_flag_property_in_different_rules():
 
     rules = [
@@ -321,4 +321,35 @@ def test_analyzer_distinguishes_identical_duplicate_declaration():
     assert finding.issue == "duplicate_declaration"
     assert finding.property == "color"
     assert finding.value == "red"
+    assert finding.source_line == 4
+def test_analyzer_identifies_conflicting_declaration():
+
+    rule = CSSRule(
+        selectors=[".card"],
+        declarations=[
+            CSSDeclaration(
+                property="display",
+                value="block",
+                source_line=3,
+                source_column=9
+            ),
+            CSSDeclaration(
+                property="display",
+                value="flex",
+                source_line=4,
+                source_column=9
+            )
+        ]
+    )
+
+    result = CSSDeclarationAnalyzer().analyze([rule])
+
+    assert len(result) == 1
+
+    finding = result[0]
+
+    assert finding.selector == ".card"
+    assert finding.property == "display"
+    assert finding.value == "flex"
+    assert finding.issue == "conflicting_declaration"
     assert finding.source_line == 4

@@ -54,7 +54,7 @@ class CSSDeclarationAnalyzer:
                     if declaration_key in seen_declarations:
                         issue = "duplicate_declaration"
                     else:
-                        issue = "duplicate_property"
+                        issue = "conflicting_declaration"
 
                     findings.append(
                         CSSDeclarationFinding(

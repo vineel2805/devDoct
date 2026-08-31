@@ -11,6 +11,7 @@ class CSSDeclaration:
 
     property: str
     value: str
+    important: bool = False
 
     source_line: int = 0
     source_column: int = 0

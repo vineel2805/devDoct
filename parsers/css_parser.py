@@ -393,13 +393,13 @@ class CSSParser:
                 declaration.value
             ).strip()
             
-            if declaration.important:
-                value += " !important"
+           
 
             parsed_declarations.append(
                 CSSDeclaration(
                     property=property_name,
                     value=value,
+                    important=declaration.important,
                     source_line=declaration.source_line,
                     source_column=declaration.source_column
                 )

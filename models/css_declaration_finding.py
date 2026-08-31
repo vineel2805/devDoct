@@ -14,5 +14,7 @@ class CSSDeclarationFinding:
     property: str
     value: str
 
+    issue: str
+        
     source_line: int = 0
     source_column: int = 0

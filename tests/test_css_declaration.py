@@ -17,6 +17,7 @@ def test_parser_extracts_declaration_property_and_value():
 
     assert declaration.property == "color"
     assert declaration.value == "red"
+    assert declaration.important is False
 
 
 def test_parser_extracts_multiple_declarations():
@@ -73,9 +74,9 @@ def test_parser_handles_important_value():
     result = CSSParser().parse(css)
 
     declaration = result.declarations[0]
-
-    assert declaration.property == "color"
-    assert declaration.value == "red !important"
+    assert declaration.value == "red"
+    assert declaration.important is True
+    
 
 
 def test_parser_handles_custom_property():

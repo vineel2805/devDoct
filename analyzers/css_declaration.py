@@ -19,6 +19,7 @@ class CSSDeclarationAnalyzer:
         for rule in rules:
 
             seen_properties = set()
+            seen_declarations = set()
 
             for declaration in rule.declarations:
 
@@ -26,13 +27,14 @@ class CSSDeclarationAnalyzer:
                 # !important detection
                 # -----------------------------
 
-                if declaration.value.endswith("!important"):
+                if declaration.important:
 
                     findings.append(
                         CSSDeclarationFinding(
                             selector=rule.selectors[0],
                             property=declaration.property,
                             value=declaration.value,
+                            issue="important_declaration",
                             source_line=declaration.source_line,
                             source_column=declaration.source_column
                         )
@@ -42,13 +44,24 @@ class CSSDeclarationAnalyzer:
                 # Duplicate property detection
                 # -----------------------------
 
+                declaration_key = (
+                    declaration.property,
+                    declaration.value
+                )
+
                 if declaration.property in seen_properties:
+
+                    if declaration_key in seen_declarations:
+                        issue = "duplicate_declaration"
+                    else:
+                        issue = "duplicate_property"
 
                     findings.append(
                         CSSDeclarationFinding(
                             selector=rule.selectors[0],
                             property=declaration.property,
                             value=declaration.value,
+                            issue=issue,
                             source_line=declaration.source_line,
                             source_column=declaration.source_column
                         )
@@ -56,6 +69,10 @@ class CSSDeclarationAnalyzer:
 
                 seen_properties.add(
                     declaration.property
+                )
+
+                seen_declarations.add(
+                    declaration_key
                 )
 
         return findings

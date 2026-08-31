@@ -28,7 +28,7 @@ def test_analyzer_finds_important_declaration():
 
     finding = result[0]
 
-    assert finding.selector == ".card"
+    assert finding.selectors == [".card"]
     assert finding.property == "color"
     assert finding.value == "red"
     assert finding.issue == "important_declaration"
@@ -88,10 +88,10 @@ def test_analyzer_finds_multiple_important_declarations():
 
     assert len(result) == 2
 
-    assert result[0].selector == ".card"
+    assert result[0].selectors == [".card"]
     assert result[0].property == "color"
 
-    assert result[1].selector == ".card"
+    assert result[1].selectors == [".card"]
     assert result[1].property == "display"
 
 
@@ -120,7 +120,7 @@ def test_analyzer_finding_includes_selector():
 
     finding = result[0]
 
-    assert finding.selector == ".card"
+    assert finding.selectors == [".card"]
     assert finding.property == "color"
     assert finding.value == "red"
     assert finding.issue == "important_declaration"
@@ -152,7 +152,7 @@ def test_analyzer_finds_duplicate_property():
 
     finding = result[0]
 
-    assert finding.selector == ".card"
+    assert finding.selectors == [".card"]
     assert finding.property == "color"
     assert finding.source_line == 4
     assert finding.issue == "conflicting_declaration"
@@ -214,7 +214,7 @@ def test_analyzer_detects_identical_duplicate_declaration():
 
     finding = result[0]
 
-    assert finding.selector == ".card"
+    assert finding.selectors == [".card"]
     assert finding.property == "color"
     assert finding.value == "red"
     assert finding.source_line == 4
@@ -348,8 +348,31 @@ def test_analyzer_identifies_conflicting_declaration():
 
     finding = result[0]
 
-    assert finding.selector == ".card"
+    assert finding.selectors == [".card"]
     assert finding.property == "display"
     assert finding.value == "flex"
     assert finding.issue == "conflicting_declaration"
     assert finding.source_line == 4
+def test_analyzer_finding_preserves_all_selectors():
+
+    rule = CSSRule(
+        selectors=[".card", ".featured"],
+        declarations=[
+            CSSDeclaration(
+                property="color",
+                value="red",
+                important=True,
+                source_line=3,
+                source_column=9
+            )
+        ]
+    )
+
+    result = CSSDeclarationAnalyzer().analyze([rule])
+
+    assert len(result) == 1
+
+    finding = result[0]
+
+    assert finding.selectors == [".card", ".featured"]
+    assert finding.issue == "important_declaration"

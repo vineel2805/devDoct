@@ -31,7 +31,7 @@ class CSSDeclarationAnalyzer:
 
                     findings.append(
                         CSSDeclarationFinding(
-                            selector=rule.selectors[0],
+                            selectors=rule.selectors,
                             property=declaration.property,
                             value=declaration.value,
                             issue="important_declaration",
@@ -58,7 +58,7 @@ class CSSDeclarationAnalyzer:
 
                     findings.append(
                         CSSDeclarationFinding(
-                            selector=rule.selectors[0],
+                            selectors=rule.selectors,
                             property=declaration.property,
                             value=declaration.value,
                             issue=issue,

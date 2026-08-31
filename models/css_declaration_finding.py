@@ -2,19 +2,18 @@
 Stores CSS declaration analysis findings.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
 class CSSDeclarationFinding:
     """Stores one CSS declaration analysis finding."""
 
-    selector: str
-    
-    property: str
-    value: str
+    selectors: list[str] = field(default_factory=list)
 
-    issue: str
-        
+    property: str = ""
+    value: str = ""
+    issue: str = ""
+
     source_line: int = 0
     source_column: int = 0

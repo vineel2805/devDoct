@@ -38,7 +38,7 @@ class CSSRuleAnalyzer:
 
                 findings.append(
                     CSSDeclarationFinding(
-                        selector=rule.selectors[0],
+                        selectors=rule.selectors,
                         property="",
                         value="",
                         issue="duplicate_rule",

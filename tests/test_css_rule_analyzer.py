@@ -40,7 +40,7 @@ def test_analyzer_finds_duplicate_rule():
 
     finding = result[0]
 
-    assert finding.selector == ".card"
+    assert finding.selectors == [".card"]
     assert finding.issue == "duplicate_rule"
     assert finding.source_line == 7
 

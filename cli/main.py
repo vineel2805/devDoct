@@ -1,6 +1,8 @@
 """
-Iksha project scan entry point.
+Iksha CLI entry point.
 """
+
+import argparse
 
 from scanner.file_scanner import FileScanner
 from scanner.html_scanner import HTMLScanner
@@ -9,43 +11,46 @@ from analyzers.usage import UsageAnalyzer
 from reports.terminal import TerminalReport
 
 
-def main() -> None:
-    """Run a complete project scan."""
+def build_parser() -> argparse.ArgumentParser:
+    """Build the Iksha command-line parser."""
+
+    parser = argparse.ArgumentParser(
+        prog="iksha",
+        description="Project Intelligence CLI",
+    )
+
+    subparsers = parser.add_subparsers(
+        dest="command"
+    )
+
+    scan_parser = subparsers.add_parser(
+        "scan",
+        help="Scan a project",
+    )
+
+    scan_parser.add_argument(
+        "path",
+        nargs="?",
+        default=".",
+        help="Project path to scan",
+    )
+
+    return parser
+
+
+def scan_project(path: str) -> None:
+    """Scan and analyze a project."""
 
     report = TerminalReport()
 
-    # ----------------------------------------
-    # Iksha identity
-    # ----------------------------------------
-
     report.show_banner()
-
-    # ----------------------------------------
-    # Project path
-    # ----------------------------------------
-
-    project_path = input(
-        "Project path: "
-    ).strip()
-
-    if not project_path:
-        report.show_info(
-            "No project path provided."
-        )
-        return
-
-    report.show_scan_start(
-        project_path
-    )
+    report.show_scan_start(path)
 
     # ----------------------------------------
     # File scan
     # ----------------------------------------
 
-    file_scanner = FileScanner(
-        project_path
-    )
-
+    file_scanner = FileScanner(path)
     project = file_scanner.scan()
 
     report.show_success(
@@ -60,7 +65,7 @@ def main() -> None:
 
     html_result = html_scanner.scan(
         project.php + project.html,
-        project.root
+        project.root,
     )
 
     report.show_success(
@@ -74,7 +79,7 @@ def main() -> None:
     css_scanner = CSSScanner()
 
     css_result = css_scanner.scan(
-        project.css
+        project.css,
     )
 
     report.show_success(
@@ -82,14 +87,14 @@ def main() -> None:
     )
 
     # ----------------------------------------
-    # CSS / HTML usage analysis
+    # Usage analysis
     # ----------------------------------------
 
     usage_analyzer = UsageAnalyzer()
 
     usage_result = usage_analyzer.analyze(
         html_result,
-        css_result
+        css_result,
     )
 
     report.show_success(
@@ -97,7 +102,7 @@ def main() -> None:
     )
 
     # ----------------------------------------
-    # Final summary
+    # Summary
     # ----------------------------------------
 
     report.show_summary(
@@ -106,6 +111,20 @@ def main() -> None:
         css_result,
         usage_result,
     )
+
+
+def main() -> None:
+    """Run the Iksha CLI."""
+
+    parser = build_parser()
+
+    args = parser.parse_args()
+
+    if args.command == "scan":
+        scan_project(args.path)
+        return
+
+    parser.print_help()
 
 
 if __name__ == "__main__":

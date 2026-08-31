@@ -118,3 +118,64 @@ def test_analyzer_finding_includes_selector():
     assert finding.selector == ".card"
     assert finding.property == "color"
     assert finding.value == "red !important"
+def test_analyzer_finds_duplicate_property():
+
+    rule = CSSRule(
+        selectors=[".card"],
+        declarations=[
+            CSSDeclaration(
+                property="color",
+                value="red",
+                source_line=3,
+                source_column=9
+            ),
+            CSSDeclaration(
+                property="color",
+                value="blue",
+                source_line=4,
+                source_column=9
+            )
+        ]
+    )
+
+    result = CSSDeclarationAnalyzer().analyze(
+        [rule]
+    )
+
+    assert len(result) == 1
+
+    finding = result[0]
+
+    assert finding.selector == ".card"
+    assert finding.property == "color"
+    assert finding.source_line == 4
+def test_analyzer_does_not_flag_property_in_different_rules():
+
+    rules = [
+        CSSRule(
+            selectors=[".card"],
+            declarations=[
+                CSSDeclaration(
+                    property="color",
+                    value="red",
+                    source_line=3,
+                    source_column=9
+                )
+            ]
+        ),
+        CSSRule(
+            selectors=[".button"],
+            declarations=[
+                CSSDeclaration(
+                    property="color",
+                    value="blue",
+                    source_line=7,
+                    source_column=9
+                )
+            ]
+        )
+    ]
+
+    result = CSSDeclarationAnalyzer().analyze(rules)
+
+    assert result == []

@@ -18,7 +18,13 @@ class CSSDeclarationAnalyzer:
 
         for rule in rules:
 
+            seen_properties = set()
+
             for declaration in rule.declarations:
+
+                # -----------------------------
+                # !important detection
+                # -----------------------------
 
                 if declaration.value.endswith("!important"):
 
@@ -31,5 +37,25 @@ class CSSDeclarationAnalyzer:
                             source_column=declaration.source_column
                         )
                     )
+
+                # -----------------------------
+                # Duplicate property detection
+                # -----------------------------
+
+                if declaration.property in seen_properties:
+
+                    findings.append(
+                        CSSDeclarationFinding(
+                            selector=rule.selectors[0],
+                            property=declaration.property,
+                            value=declaration.value,
+                            source_line=declaration.source_line,
+                            source_column=declaration.source_column
+                        )
+                    )
+
+                seen_properties.add(
+                    declaration.property
+                )
 
         return findings

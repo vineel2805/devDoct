@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from parsers.css_parser import ParsedSelector
 from models.css_declaration import CSSDeclaration
 
+from models.css_declaration_finding import CSSDeclarationFinding
 
 @dataclass
 class FileCSSResult:
@@ -21,9 +22,19 @@ class FileCSSResult:
     selectors: list[ParsedSelector] = field(
         default_factory=list
     )
+
     declarations: list[CSSDeclaration] = field(
-    default_factory=list
+        default_factory=list
     )
+    
+    declaration_findings: list[CSSDeclarationFinding] = field(
+        default_factory=list
+    )
+
+    rule_findings: list[CSSDeclarationFinding] = field(
+        default_factory=list
+    )
+
     total_rules: int = 0
 
 
@@ -40,6 +51,14 @@ class CSSScanResult:
     # Per-file scan results.
     files: dict[Path, FileCSSResult] = field(
         default_factory=dict
+    )
+
+    declaration_findings: list[CSSDeclarationFinding] = field(
+        default_factory=list
+    )
+
+    rule_findings: list[CSSDeclarationFinding] = field(
+        default_factory=list
     )
 
     @property

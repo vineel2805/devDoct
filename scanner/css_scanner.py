@@ -7,12 +7,17 @@ from pathlib import Path
 from models.css_result import CSSScanResult, FileCSSResult
 from parsers.css_parser import CSSParser
 
+from analyzers.css_declaration import CSSDeclarationAnalyzer
+from analyzers.css_rule import CSSRuleAnalyzer
+
 
 class CSSScanner:
-    """Extracts CSS selectors."""
+    """Extracts CSS selectors and analyzes CSS rules."""
 
     def __init__(self):
         self.parser = CSSParser()
+        self.declaration_analyzer = CSSDeclarationAnalyzer()
+        self.rule_analyzer = CSSRuleAnalyzer()
 
     def scan(
         self,
@@ -32,6 +37,14 @@ class CSSScanner:
 
                 parsed = self.parser.parse(css)
 
+                declaration_findings = self.declaration_analyzer.analyze(
+                    parsed.rules
+                )
+
+                rule_findings = self.rule_analyzer.analyze(
+                    parsed.rules
+                )
+
                 file_result = FileCSSResult()
 
                 # -----------------------------
@@ -45,6 +58,9 @@ class CSSScanner:
                 file_result.selectors = parsed.selectors
                 file_result.declarations = parsed.declarations
                 file_result.total_rules = parsed.total_rules
+
+                file_result.declaration_findings = declaration_findings
+                file_result.rule_findings = rule_findings
 
                 # -----------------------------
                 # Store project-wide data
@@ -60,6 +76,13 @@ class CSSScanner:
 
                 result.elements.update(
                     parsed.elements
+                )
+                result.declaration_findings.extend(
+                    declaration_findings
+                )
+
+                result.rule_findings.extend(
+                    rule_findings
                 )
 
                 # -----------------------------

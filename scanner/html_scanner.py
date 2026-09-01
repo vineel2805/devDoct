@@ -19,10 +19,12 @@ class HTMLScanner:
         root: Path
     ) -> HTMLScanResult:
 
+        root = Path(root).resolve()
+
         result = HTMLScanResult(root=root)
 
         for file in files:
-
+            file = Path(file).resolve()
             try:
 
                 html = file.read_text(
@@ -111,11 +113,11 @@ class HTMLScanner:
                 # Store per-file result
                 # -----------------------------
 
-                relative_path = file.relative_to(root)
+                normalized_file = Path(file).resolve()
 
                 result.files[
-                    relative_path
-                ] = file_result
+                        normalized_file
+                    ] = file_result
 
             except Exception as e:
 

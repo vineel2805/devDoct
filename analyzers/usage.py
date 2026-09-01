@@ -2,6 +2,8 @@
 Analyzes CSS selector usage against HTML documents.
 """
 
+from pathlib import Path
+
 from models.html_result import HTMLScanResult
 from models.css_result import CSSScanResult
 from models.usage_result import UsageResult, SelectorUsage
@@ -18,7 +20,7 @@ class UsageAnalyzer:
     def analyze(
         self,
         html: HTMLScanResult,
-        css: CSSScanResult
+        css: CSSScanResult,
     ) -> UsageResult:
 
         result = UsageResult()
@@ -37,10 +39,13 @@ class UsageAnalyzer:
 
                     if self.matcher.matches(
                         selector,
-                        html_file.document
+                        html_file.document,
                     ):
                         matched_files.append(
-                            str(html_path)
+                            self._display_path(
+                                html_path,
+                                html.root,
+                            )
                         )
 
                 result.selectors.append(
@@ -51,7 +56,7 @@ class UsageAnalyzer:
                         source_file=str(css_path),
                         source_line=selector.source_line,
                         source_column=selector.source_column,
-                        error=selector.error
+                        error=selector.error,
                     )
                 )
 
@@ -88,3 +93,31 @@ class UsageAnalyzer:
         )
 
         return result
+
+    @staticmethod
+    def _display_path(
+        file: Path,
+        root: Path,
+    ) -> str:
+        """
+        Convert an internal project path into a
+        project-relative path suitable for reports.
+
+        Example:
+
+            C:/project/pages/index.html
+                ↓
+            pages/index.html
+        """
+
+        file = Path(file)
+        root = Path(root)
+
+        try:
+            return file.resolve().relative_to(
+                root.resolve()
+            ).as_posix()
+
+        except ValueError:
+            # Fallback for files outside the project root.
+            return file.as_posix()

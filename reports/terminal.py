@@ -2,12 +2,16 @@
 Terminal presentation for Iksha.
 """
 
+from pathlib import Path
+
 from rich.console import Console
 from rich.text import Text
 
+from reports.aggregator import ReportAggregator
+
 
 class TerminalReport:
-    """Renders Iksha scan results in the terminal."""
+    """Renders Iksha analysis results in the terminal."""
 
     def __init__(self):
         self.console = Console()
@@ -15,7 +19,10 @@ class TerminalReport:
     def show_banner(self) -> None:
         """Display Iksha identity."""
 
-        logo = Text("IKSHA", style="bold blue")
+        logo = Text(
+            "IKSHA",
+            style="bold blue",
+        )
 
         self.console.print()
         self.console.print(logo)
@@ -212,3 +219,176 @@ class TerminalReport:
             "─" * 48,
             style="dim",
         )
+
+    def show_file_analysis(
+        self,
+        aggregator: ReportAggregator,
+    ) -> None:
+        """Display CSS files ordered by finding count."""
+
+        self.console.print()
+        self.console.print(
+            "CSS FILE ANALYSIS",
+            style="bold blue",
+        )
+        self.console.print()
+
+        counts = aggregator.file_finding_counts()
+
+        if not counts:
+            self.console.print(
+                "  No CSS findings.",
+                style="dim",
+            )
+            return
+
+        for file, count in counts.items():
+            self.console.print(
+            f"  {count:>3}  {file.as_posix()}"
+            )
+
+    def show_issue_analysis(
+        self,
+        aggregator: ReportAggregator,
+    ) -> None:
+        """Display findings grouped by issue type."""
+
+        self.console.print()
+        self.console.print(
+            "FINDINGS BY TYPE",
+            style="bold blue",
+        )
+        self.console.print()
+
+        grouped = aggregator.findings_by_issue()
+
+        if not grouped:
+            self.console.print(
+                "  No CSS findings.",
+                style="dim",
+            )
+            return
+
+        labels = {
+            "duplicate_declaration":
+                "Duplicate declarations",
+
+            "conflicting_declaration":
+                "Conflicting declarations",
+
+            "important_declaration":
+                "Important declarations",
+
+            "duplicate_property":
+                "Duplicate properties",
+
+            "duplicate_rule":
+                "Duplicate rules",
+        }
+
+        for issue, findings in grouped.items():
+
+            label = labels.get(
+                issue,
+                issue.replace("_", " ").title(),
+            )
+
+            self.console.print(
+                f"  {len(findings):>3}  {label}"
+            )
+
+    def show_file_details(
+        self,
+        file: Path,
+        aggregator: ReportAggregator,
+    ) -> None:
+        """Display findings belonging to one CSS file."""
+
+        findings_by_file = (
+            aggregator.findings_by_file()
+        )
+
+        findings = findings_by_file.get(
+            file,
+            [],
+        )
+
+        self.console.print()
+        self.console.print(
+            file.as_posix(),
+            style="bold blue",
+        )
+
+        self.console.print()
+
+        if not findings:
+            self.console.print(
+                "  No CSS findings.",
+                style="dim",
+            )
+            return
+
+        count = len(findings)
+
+        self.console.print(
+            f"{count} "
+            f"{'finding' if count == 1 else 'findings'}"
+        )
+
+        self.console.print()
+
+        labels = {
+            "duplicate_declaration":
+                "Duplicate declaration",
+
+            "conflicting_declaration":
+                "Conflicting declaration",
+
+            "important_declaration":
+                "Important declaration",
+
+            "duplicate_property":
+                "Duplicate property",
+
+            "duplicate_rule":
+                "Duplicate rule",
+        }
+
+        for finding in findings:
+
+            label = labels.get(
+                finding.issue,
+                finding.issue.replace(
+                    "_",
+                    " ",
+                ).title(),
+            )
+
+            self.console.print(
+                f"  {label}",
+                style="bold",
+            )
+
+            self.console.print(
+                f"    Selector: "
+                f"{', '.join(finding.selectors)}"
+            )
+
+            if finding.property:
+                self.console.print(
+                    f"    Property: "
+                    f"{finding.property}"
+                )
+
+            if finding.value:
+                self.console.print(
+                    f"    Value: "
+                    f"{finding.value}"
+                )
+
+            self.console.print(
+                f"    Line: "
+                f"{finding.source_line}"
+            )
+
+            self.console.print()

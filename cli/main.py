@@ -9,6 +9,7 @@ from scanner.html_scanner import HTMLScanner
 from scanner.css_scanner import CSSScanner
 from analyzers.usage import UsageAnalyzer
 from reports.terminal import TerminalReport
+from reports.aggregator import ReportAggregator
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -85,6 +86,9 @@ def scan_project(path: str) -> None:
     report.show_success(
         "CSS analysis complete"
     )
+    
+
+    
 
     # ----------------------------------------
     # Usage analysis
@@ -111,6 +115,18 @@ def scan_project(path: str) -> None:
         css_result,
         usage_result,
     )
+    # ----------------------------------------
+    # CSS findings
+    # ----------------------------------------
+
+    findings = (
+            css_result.declaration_findings
+            + css_result.rule_findings
+        )
+    
+    aggregator = ReportAggregator(findings)
+    report.show_file_analysis(aggregator)
+    report.show_issue_analysis(aggregator)
 
 
 def main() -> None:

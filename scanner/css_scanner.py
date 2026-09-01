@@ -46,7 +46,11 @@ class CSSScanner:
                 )
 
                 file_result = FileCSSResult()
+                for finding in declaration_findings:
+                    finding.file = file
 
+                for finding in rule_findings:
+                    finding.file = file
                 # -----------------------------
                 # Store file data
                 # -----------------------------
